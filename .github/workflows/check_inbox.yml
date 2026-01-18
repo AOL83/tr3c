@@ -6,22 +6,46 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Compute changed files
         id: changes
+        shell: bash
         run: |
+          set -euo pipefail
           git fetch origin "$GITHUB_BASE_REF" --depth=1
-          CHANGED=$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
-          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$CHANGED" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          CHANGED="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")"
+          {
+            echo "changed_files<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Run ASCII lint
+        shell: bash
         run: |
-          python scripts/lint/ascii_lint.py ${{ steps.changes.outputs.changed_files }}
+          set -euo pipefail
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ -e "$file" ] || continue
+            python scripts/lint/ascii_lint.py "$file"
+          done <<'EOF'
+          ${{ steps.changes.outputs.changed_files }}
+          EOF
+
       - name: Run INBOX lint
+        shell: bash
         run: |
-          python scripts/lint/inbox_lint.py ${{ steps.changes.outputs.changed_files }}
+          set -euo pipefail
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ -e "$file" ] || continue
+            python scripts/lint/inbox_lint.py "$file"
+          done <<'EOF'
+          ${{ steps.changes.outputs.changed_files }}
+          EOF
