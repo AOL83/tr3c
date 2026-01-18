@@ -1,0 +1,2 @@
+uid,filename,datetime_utc,sha256,author,intended_path,status
+UID-EXAMPLE-0001,20240101_T01_CAL_TABLE_sample_v1.0.csv,2024-01-01T00:00:00Z,deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef,system,05_DATA/raw/sample.csv,example

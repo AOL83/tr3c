@@ -1,0 +1,27 @@
+name: check-inbox
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compute changed files
+        id: changes
+        run: |
+          git fetch origin "$GITHUB_BASE_REF" --depth=1
+          CHANGED=$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
+          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$CHANGED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Run ASCII lint
+        run: |
+          python scripts/lint/ascii_lint.py ${{ steps.changes.outputs.changed_files }}
+      - name: Run INBOX lint
+        run: |
+          python scripts/lint/inbox_lint.py ${{ steps.changes.outputs.changed_files }}
