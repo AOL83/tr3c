@@ -5,6 +5,19 @@ import subprocess
 import sys
 from typing import Iterable, Tuple
 
+# ---- ALLOWLIST: repo infrastructure & governance ----
+ALLOWLIST_PREFIXES = (
+    ".github/",
+    "scripts/",
+    "Makefile",
+    ".gitignore",
+    "01_GOVERNANCE/",
+    "02_LICENSES/",
+    "06_TEMPLATES/",
+    "07_AUDIT/",
+)
+# ----------------------------------------------------
+
 INBOX_PATTERN = re.compile(r"^INBOX/[0-9]{8}/T0[1-8]/")
 BASENAME_PATTERN = re.compile(
     r"^[0-9]{8}_T0[1-8]_[A-Z]+_[A-Z]+_[a-z0-9_-]+_v[0-9]+\.[0-9]+\.[a-z0-9]+$"
@@ -18,6 +31,10 @@ REQUIRED_KEYS = [
     "intended_path",
     "source_inputs",
 ]
+
+
+def is_allowlisted(path: str) -> bool:
+    return any(path.startswith(prefix) for prefix in ALLOWLIST_PREFIXES)
 
 
 def get_paths_from_git() -> list[str]:
@@ -71,14 +88,19 @@ def main() -> int:
     if not paths:
         paths = get_paths_from_git()
 
-    maintainer_override = os.environ.get("TR3C_MAINTAINER", "").lower() in {"1", "true", "yes"}
+    maintainer_override = os.environ.get("TR3C_MAINTAINER", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
 
     errors = []
 
     for path in iter_files(paths):
-        if not maintainer_override and not INBOX_PATTERN.match(path):
-            errors.append(f"Non-INBOX change detected: {path}")
-            continue
+        if not maintainer_override:
+            if not INBOX_PATTERN.match(path) and not is_allowlisted(path):
+                errors.append(f"Non-INBOX change detected: {path}")
+                continue
 
         if not path.startswith("INBOX/"):
             continue
@@ -96,13 +118,16 @@ def main() -> int:
                 continue
             missing = check_required_keys(block)
             if missing:
-                errors.append(f"Missing keys in front-matter for {path}: {', '.join(missing)}")
+                errors.append(
+                    f"Missing keys in front-matter for {path}: {', '.join(missing)}"
+                )
 
     if errors:
         print("INBOX lint failed:")
         for error in errors:
             print(f"- {error}")
         return 1
+
     return 0
 
 
