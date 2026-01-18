@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+changed_files=$(git diff --cached --name-only)
+if [ -z "$changed_files" ]; then
+  exit 0
+fi
+
+python scripts/lint/ascii_lint.py $changed_files
+python scripts/lint/inbox_lint.py $changed_files
