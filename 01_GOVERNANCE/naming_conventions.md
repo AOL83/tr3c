@@ -29,3 +29,10 @@ YYYYMMDD_Txx_AREA_TYPE_slug_vMAJOR.MINOR.ext
 
 Markdown front-matter is required and must include keys:
 tr3c_terminal, area, type, version, status, intended_path, source_inputs
+# Manifest
+
+date: 20240131
+terminal: T03
+
+files:
+- 20240131_T03_FRE_NOTE_sample_note_v1.0.md
